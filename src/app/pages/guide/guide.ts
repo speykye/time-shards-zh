@@ -1,3 +1,15 @@
+import { Component } from '@angular/core';
+import { MarkdownViewer } from '../markdown-viewer/markdown-viewer';
+
+@Component({
+  selector: 'app-guide',
+  imports: [MarkdownViewer],
+  templateUrl: './guide.html',
+  styleUrl: './guide.scss',
+  standalone: true,
+})
+export class Guide {
+  html = `
 # 📘 Time-Shards 使用指南：给画师与金主的“防扯皮”记事本
 
 ## 👋 它是做什么的？
@@ -124,3 +136,5 @@ A: 没关系！**你自己用就行**。你只需要把生成的“信函文本�
 哪怕 99% 的单子都很愉快，只要有 1% 遇到扯皮，这个工具就能帮你省下几个晚上的失眠时间。
 
 **现在，去创建你的第一个项目吧！** 🎨
+  `;
+}

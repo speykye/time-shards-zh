@@ -1,0 +1,107 @@
+<div class="sd-container" #landingBody>
+    <!-- Hero Section -->
+    <header class="lp-hero">
+        <span class="sd-badge">🛡️ 隐私优先 · 本地存储 · 完全免费</span>
+        <h1 class="sd-title">Time-Shards</h1>
+        <span class="sd-subtitle">把混乱的私聊，变成清晰的证据链</span>
+        <p class="sd-lead">
+            专为画师与约稿人设计的协作日志。无需注册，数据不离设备。<br>
+            将散落在微信、QQ、邮件里的碎片记录，整理成可追溯、可导出的时间轴。
+        </p>
+
+        <div class="lp-actions">
+            <a class="btn primary" routerLink="/time-shards">立即开始记录</a>
+            <a class="btn ghost" (click)="howItWork()">它是如何工作的？</a>
+        </div>
+
+        <div class="sd-meta">
+            <span>✅ 无需账号</span>
+            <span>✅ 不上传原图</span>
+            <span>✅ 随时导出 JSON</span>
+        </div>
+    </header>
+
+    <!-- Why It Exists -->
+    <section class="sd-section">
+        <h2 class="sd-section-title">为什么需要它？</h2>
+        <p style="margin-bottom: 0.9rem; max-width: 58rem;">
+            约稿最怕“口说无凭”。聊天记录刷屏、截图零散、双方记忆偏差……当纠纷出现时，我们往往百口莫辩。
+            Time-Shards 帮你把“感觉”变成“事实”。
+        </p>
+
+        <div class="sd-grid">
+            <div class="card">
+                <h3>🗣️ 拒绝记忆偏差</h3>
+                <p>微信/QQ 消息容易被淹没。在这里，每一个“确认”、“修改”、“交付”都被打上时间戳，永久留存。</p>
+            </div>
+            <div class="card">
+                <h3>📝 结构化记录</h3>
+                <p>不再是杂乱的聊天流。我们将对话提炼为“需求锁定”、“阶段交付”、“变更确认”等关键节点。</p>
+            </div>
+            <div class="card">
+                <h3>🔒 隐私绝对安全</h3>
+                <p>所有数据仅存储在你的浏览器本地。我们不收集任何画作、聊天记录或个人信息。</p>
+            </div>
+        </div>
+    </section>
+
+    <!-- How It Works -->
+    <section id="how-it-works" class="sd-section">
+        <h2>三步，给约稿上个保险</h2>
+        <div class="sd-grid">
+            <div class="card">
+                <h3>1. 创建项目</h3>
+                <p>输入甲方昵称、预算、截止日期。一个约稿 = 一条独立的时间轴。</p>
+            </div>
+            <div class="card">
+                <h3>2. 添加碎片 (Shards)</h3>
+                <p>收到定金？记一笔。发送草图？记一笔。甲方要求大修？记一笔。支持拖拽上传图片。</p>
+            </div>
+            <div class="card">
+                <h3>3. 导出/封存</h3>
+                <p>发生纠纷？一键导出长图或 JSON 包。清晰的时间线就是最好的谈判筹码。</p>
+            </div>
+        </div>
+
+        <div class="lp-tips">
+            <p class="muted">
+                💡 <strong>小贴士：</strong>建议在每次关键沟通后花 1 分钟记录。当对方说“我从来没说过”时，你可以直接甩出这条带时间戳的记录。
+            </p>
+        </div>
+    </section>
+
+    <!-- Privacy & Features -->
+    <section class="sd-section">
+        <h2>隐私与设计理念</h2>
+        <div class="sd-grid">
+            <div class="card">
+                <h3>🛡️ Local-First 架构</h3>
+                <p>数据存储在您的浏览器 LocalStorage 中。即使我们服务器倒闭，您的数据依然在您手中。</p>
+            </div>
+            <div class="card">
+                <h3>🎨 莫兰迪色系</h3>
+                <p>温暖的色调设计，旨在降低记录时的焦虑感。即使在处理纠纷，也能保持冷静理性。</p>
+            </div>
+            <div class="card">
+                <h3>📤 自由导出</h3>
+                <p>支持导出为标准 JSON 格式或生成分享图片。数据所有权完全归您，无任何平台锁定。</p>
+            </div>
+        </div>
+    </section>
+
+    <!-- Footer -->
+    <footer class="sd-footer">
+        <div>
+            <div class="sd-title">Time-Shards</div>
+            <div class="muted">
+                一个实验性的开源工具 by Skreeb
+            </div>
+        </div>
+
+        <div class="lp-footer-right">
+            <a class="sd-link" routerLink="/guide">使用指南</a>
+            <a class="sd-link">GitHub 源码</a>
+            <a class="sd-link" routerLink="/privacy">隐私政策</a>
+        </div>
+    </footer>
+</div>

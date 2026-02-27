@@ -1,0 +1,524 @@
+<div class="ts-root" id="ts-root">
+    <!-- ===== Header ===== -->
+    <header class="ts-header">
+        <div class="ts-title-row">
+            <div class="ts-title-left">
+                <div class="ts-logo-pill">⏱</div>
+                <div>
+                    <h1 class="ts-title">Time-Shards</h1>
+                    <p class="ts-subtitle">委托项目里程碑与修订的温馨记录本 · 本地优先 · 隐私安全</p>
+                </div>
+            </div>
+
+            <div class="ts-toolbar">
+                <button type="button" class="ts-btn ghost" (click)="exportJson()" [disabled]="!hasProjects()">
+                    <span>📥</span> 导出备份
+                </button>
+
+                <label class="ts-btn ghost file-label">
+                    <span>📂</span> 导入数据
+                    <input type="file" accept="application/json" (change)="onImportFileSelected($event)" />
+                </label>
+            </div>
+        </div>
+    </header>
+
+    <main class="ts-main">
+        <!-- ===== Sidebar: Projects ===== -->
+        <section class="ts-sidebar">
+            <h2 class="ts-section-title">我的项目</h2>
+
+            @if (projects().length) {
+            <div class="ts-project-list">
+                @for (p of projects(); track p.id; let i = $index) {
+                <button class="ts-project-item" [ngClass]="{ active: i === currentProjectIndex() }" type="button"
+                    (click)="selectProject(i)">
+                    <div class="ts-project-name">{{ p.name }}</div>
+                    <div class="ts-project-meta">
+                        {{ p.shards.length }} 条记录
+                    </div>
+                </button>
+                }
+            </div>
+            } @else {
+            <div class="ts-empty-text">
+                <p>🍃 暂无项目</p>
+                <p style="font-size: 0.8rem; margin-top: 0.5rem;">在下方创建您的第一个委托项目吧</p>
+            </div>
+            }
+
+            <div class="ts-new-project">
+                <label class="ts-input-label">新建项目</label>
+                <div class="ts-new-project-row">
+                    <input #projectName class="ts-input" type="text" placeholder="例如：狼人设定图、Vtuber 模型..."
+                        (keyup.enter)="addProject(projectName)" />
+                    <button class="ts-btn primary" type="button" (click)="addProject(projectName)">创建</button>
+                </div>
+
+                @if (currentProject()) {
+                <button type="button" class="ts-btn subtle ts-delete-project" (click)="deleteCurrentProject()">
+                    删除当前项目
+                </button>
+                }
+            </div>
+        </section>
+
+        <!-- ===== Right panel ===== -->
+        @if (currentProject(); as cp) {
+        <section class="ts-panel">
+            <!-- ===== Form Card ===== -->
+            <div class="ts-card ts-form-card">
+                <div class="ts-form-header" style="margin-bottom: 1rem;">
+                    <h2 class="ts-section-title" style="font-size: 1rem; color: var(--sd-text-strong);">
+                        {{ isEditing() ? '✏️ 编辑记录' : '➕ 新增记录' }}
+                        <span style="font-weight: 400; color: var(--sd-muted); font-size: 0.9em;">· {{ cp.name }}</span>
+                    </h2>
+                </div>
+
+                <!-- project summary -->
+                <div class="ts-form-field ts-form-field--full ts-summary-field">
+                    <label class="ts-input-label">项目简介</label>
+                    <input class="ts-input" type="text" placeholder="一句话描述项目，如：NSFW 狼人设定图，3 个姿势，加急"
+                        [ngModel]="cp.summary || ''" (ngModelChange)="onSummaryChange($event)" />
+                </div>
+
+                <div class="ts-form-grid">
+                    <div class="ts-form-field">
+                        <label class="ts-input-label">类型</label>
+                        <select class="ts-select" [ngModel]="shardKind()" (ngModelChange)="shardKind.set($event)">
+                            <option value="Note">📝 备注</option>
+                            <option value="Milestone">🚩 里程碑</option>
+                            <option value="Letter">📨 信函/协议</option>
+                        </select>
+                    </div>
+
+                    <div class="ts-form-field">
+                        <label class="ts-input-label">归属方</label>
+                        <select class="ts-select" [ngModel]="shardSide()" (ngModelChange)="shardSide.set($event)">
+                            <option value="Artist">🎨 画师</option>
+                            <option value="Client">💰 金主</option>
+                            <option value="Both">🤝 双方</option>
+                        </select>
+                    </div>
+                </div>
+
+                <!-- Milestone extra -->
+                @if (shardKind() === 'Milestone') {
+                <div class="ts-form-grid">
+                    <div class="ts-form-field">
+                        <label class="ts-input-label">截止日期</label>
+                        <input class="ts-input" type="date" [ngModel]="milestoneDueAt()"
+                            (ngModelChange)="milestoneDueAt.set($event)" />
+                    </div>
+                    <div class="ts-form-field">
+                        <label class="ts-input-label">状态</label>
+                        <select class="ts-select" [ngModel]="milestoneStatus()"
+                            (ngModelChange)="milestoneStatus.set($event)">
+                            <option value="planned">📅 计划中</option>
+                            <option value="in_progress">🔨 进行中</option>
+                            <option value="done">✅ 已完成</option>
+                        </select>
+                    </div>
+                </div>
+                }
+
+                <!-- Note extra -->
+                @if (shardKind() === 'Note') {
+                <div class="ts-form-grid">
+                    <div class="ts-form-field">
+                        <label class="ts-input-label">关联里程碑</label>
+                        <select class="ts-select" [ngModel]="noteMilestoneId()"
+                            (ngModelChange)="noteMilestoneId.set($event)">
+                            <option value="">(无关联)</option>
+                            @for (m of milestonesForCurrentProject(); track m.id) {
+                            <option [value]="m.id">{{ m.label }}</option>
+                            }
+                        </select>
+                    </div>
+                </div>
+                }
+
+                <!-- Letter extra -->
+                @if (shardKind() === 'Letter') {
+                <div class="ts-form-grid">
+                    <div class="ts-form-field">
+                        <label class="ts-input-label">信函类型</label>
+                        <select class="ts-select" [ngModel]="letterType()" (ngModelChange)="letterType.set($event)">
+                            <option value="Proposal">📄 提案</option>
+                            <option value="Change">⚠️ 变更请求</option>
+                            <option value="Acceptance">🎉 验收确认</option>
+                        </select>
+                    </div>
+
+                    <div class="ts-form-field">
+                        <label class="ts-input-label">关联里程碑</label>
+                        <select class="ts-select" [ngModel]="letterMilestoneId()"
+                            (ngModelChange)="letterMilestoneId.set($event)">
+                            <option value="">(无关联)</option>
+                            @for (m of milestonesForCurrentProject(); track m.id) {
+                            <option [value]="m.id">{{ m.label }}</option>
+                            }
+                        </select>
+                    </div>
+                </div>
+
+                <div class="ts-form-field ts-form-field--full" style="margin-top: 0.5rem;">
+                    <label class="ts-input-label">结构化条款 (防扯皮专用)</label>
+                    <div class="ts-letter-fields"
+                        style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 0.75rem;">
+                        <div class="ts-form-field">
+                            <label class="ts-input-label">交付内容</label>
+                            <input class="ts-input" type="text" [ngModel]="lfDeliverables()"
+                                (ngModelChange)="lfDeliverables.set($event)" />
+                        </div>
+                        <div class="ts-form-field">
+                            <label class="ts-input-label">用途授权</label>
+                            <input class="ts-input" type="text" placeholder="个人 / 商业" [ngModel]="lfUsage()"
+                                (ngModelChange)="lfUsage.set($event)" />
+                        </div>
+                        <div class="ts-form-field">
+                            <label class="ts-input-label">截止期限</label>
+                            <input class="ts-input" type="date" [ngModel]="lfDeadline()"
+                                (ngModelChange)="lfDeadline.set($event)" />
+                        </div>
+                        <div class="ts-form-field">
+                            <label class="ts-input-label">修改次数</label>
+                            <input class="ts-input" type="text" placeholder="例：2 轮大改" [ngModel]="lfRevisions()"
+                                (ngModelChange)="lfRevisions.set($event)" />
+                        </div>
+                        <div class="ts-form-field" style="grid-column: span 2;">
+                            <label class="ts-input-label">验收标准 & 范围边界</label>
+                            <div style="display: flex; gap: 0.5rem;">
+                                <input class="ts-input" type="text" placeholder="验收标准" [ngModel]="lfAcceptance()"
+                                    (ngModelChange)="lfAcceptance.set($event)" style="flex:1" />
+                                <input class="ts-input" type="text" placeholder="不包含的内容" [ngModel]="lfScope()"
+                                    (ngModelChange)="lfScope.set($event)" style="flex:1" />
+                            </div>
+                        </div>
+                        <div class="ts-form-field" style="grid-column: span 2;">
+                            <label class="ts-input-label">参考链接</label>
+                            <textarea class="ts-textarea" style="min-height: 60px;" [ngModel]="lfRefs()"
+                                (ngModelChange)="lfRefs.set($event)"></textarea>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="ts-form-actions ts-form-actions--left"
+                    style="justify-content: flex-start; border:none; padding:0;">
+                    <button type="button" class="ts-btn ghost" (click)="copyLetterTextFromForm()">📋 复制信函文本</button>
+                </div>
+
+                @if (letterPreviewText()) {
+                <div class="ts-letter-preview" style="margin-top: 0.5rem;">
+                    <label class="ts-input-label">预览</label>
+                    <pre class="ts-letter-preview-box"
+                        style="background:#f5f7fa; padding:0.75rem; border-radius:6px; font-size:0.85rem; white-space:pre-wrap; border:1px solid #ebeef5;">{{ letterPreviewText() }}</pre>
+                </div>
+                }
+                }
+
+                <!-- Common label/details -->
+                <div class="ts-form-grid" style="margin-top: 0.5rem;">
+                    <div class="ts-form-field" style="grid-column: span 2;">
+                        <label class="ts-input-label">
+                            @if (shardKind() === 'Milestone') { 里程碑标题 } @else { 简短主题 }
+                        </label>
+                        <input class="ts-input" type="text" placeholder="例：草图确认 / 变更请求 / 尾款支付" [ngModel]="shardLabel()"
+                            (ngModelChange)="shardLabel.set($event)" />
+                    </div>
+                </div>
+
+                <div class="ts-form-field ts-form-field--full">
+                    <label class="ts-input-label">详细内容</label>
+                    <textarea class="ts-textarea" placeholder="记录具体的沟通细节、文件往来、特殊约定等..." [ngModel]="shardDetails()"
+                        (ngModelChange)="shardDetails.set($event)"></textarea>
+                </div>
+
+                <div class="ts-form-actions">
+                    @if (!isEditing()) {
+                    <button type="button" class="ts-btn ghost" (click)="clearShardForm()">重置</button>
+                    } @else {
+                    <button type="button" class="ts-btn ghost" (click)="cancelEditShard()">取消</button>
+                    }
+
+                    <button type="button" class="ts-btn primary" (click)="saveShard()">
+                        {{ isEditing() ? '💾 保存修改' : '✨ 保存记录' }}
+                    </button>
+                </div>
+
+                <div style="text-align: center; font-size: 0.75rem; color: var(--sd-muted); margin-top: 0.5rem;">
+                    💡 提示：先创建记录，再在该记录下上传文件哈希作为证据。
+                </div>
+            </div>
+
+            <!-- ===== Log Card ===== -->
+            <div class="ts-card ts-log-card">
+                <div class="ts-log-header">
+                    <div class="ts-log-header-main">
+                        <h2 class="ts-section-title" style="font-size: 1rem; color: var(--sd-text-strong);">
+                            📜 时间线
+                            <span style="font-weight: 400; font-size: 0.85em; color: var(--sd-muted);">
+                                (显示 {{ visibleShards().length }} / {{ shardsForCurrentProject().length }})
+                            </span>
+                        </h2>
+                        @if (cp.summary) {
+                        <p class="ts-project-summary"
+                            style="font-size: 0.8rem; color: var(--sd-muted); margin: 0.25rem 0 0;">
+                            {{ cp.summary }}
+                        </p>
+                        }
+                    </div>
+
+                    <div class="ts-log-controls">
+                        <div class="ts-log-search">
+                            <input class="ts-input ts-input--compact" type="text" placeholder="🔍 搜索关键词..."
+                                [ngModel]="searchTerm()" (ngModelChange)="searchTerm.set($event)" />
+                        </div>
+
+                        <div class="ts-log-ms-filter" style="flex: 0 0 auto;">
+                            <select class="ts-select ts-select--compact" [ngModel]="filterMilestone()"
+                                (ngModelChange)="filterMilestone.set($event)">
+                                <option value="all">所有里程碑</option>
+                                <option value="unbound">未关联事项</option>
+                                @for (m of milestoneSpine(); track m.id) {
+                                <option [value]="m.id">{{ m.label || '(未命名)' }}</option>
+                                }
+                            </select>
+                        </div>
+
+                        @if (filterMilestone() !== 'all') {
+                        <button type="button" class="ts-filter-chip active" (click)="clearMilestoneFilter()"
+                            style="padding: 0.2rem 0.5rem;">
+                            ✕
+                        </button>
+                        }
+
+                        <div class="ts-filter-chips">
+                            <button type="button" class="ts-filter-chip" [ngClass]="{ active: filterSide() === 'All' }"
+                                (click)="filterSide.set('All')">全部</button>
+                            <button type="button" class="ts-filter-chip"
+                                [ngClass]="{ active: filterSide() === 'Artist' }"
+                                (click)="filterSide.set('Artist')">画师</button>
+                            <button type="button" class="ts-filter-chip"
+                                [ngClass]="{ active: filterSide() === 'Client' }"
+                                (click)="filterSide.set('Client')">金主</button>
+                            <button type="button" class="ts-filter-chip" [ngClass]="{ active: filterSide() === 'Both' }"
+                                (click)="filterSide.set('Both')">双方</button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- spine -->
+                @if (milestoneSpine().length) {
+                <div class="ts-spine">
+                    <button type="button" class="ts-spine-pill" [ngClass]="{ active: filterMilestone() === 'all' }"
+                        (click)="filterMilestone.set('all')">
+                        全部
+                    </button>
+                    <button type="button" class="ts-spine-pill" [ngClass]="{ active: filterMilestone() === 'unbound' }"
+                        (click)="filterMilestone.set('unbound')" title="未关联任何里程碑的备注和信函">
+                        未关联
+                    </button>
+
+                    @for (m of milestoneSpine(); track m.id) {
+                    <button type="button" class="ts-spine-pill" [ngClass]="{ active: filterMilestone() === m.id }"
+                        (click)="filterMilestone.set(m.id)">
+                        <span class="ts-spine-title">{{ m.label || '(未命名)' }}</span>
+                        <span class="ts-spine-meta">
+                            @if (m.milestone?.status) {
+                            <span class="ts-chip ts-chip--ms">
+                                {{ m.milestone?.status === 'planned' ? '计划' : m.milestone?.status === 'in_progress' ?
+                                '进行' : '完成' }}
+                            </span>
+                            }
+                            @if (m.milestone?.dueAt) {
+                            <span class="ts-chip ts-chip--ms">{{ m.milestone?.dueAt | date : 'MM-dd' }}</span>
+                            }
+                        </span>
+                    </button>
+                    }
+                </div>
+                }
+
+                <div class="ts-shard-list-container">
+                    @if (!shardsForCurrentProject().length) {
+                    <div class="ts-empty-text">
+                        <p>🌱 还没有任何记录</p>
+                        <p style="font-size: 0.8rem;">从上方添加第一条里程碑或备注开始吧</p>
+                    </div>
+                    }
+
+                    @if (shardsForCurrentProject().length && !visibleShards().length) {
+                    <div class="ts-empty-text">
+                        <p>🔍 没有找到匹配的记录</p>
+                        <p style="font-size: 0.8rem;">尝试清除筛选条件或更换关键词</p>
+                    </div>
+                    }
+
+                    @if (visibleShards().length) {
+                    <ul class="ts-shard-list">
+                        @for (s of visibleShards(); track s.id) {
+                        <li class="ts-shard-item" [ngClass]="{ 'is-editing': editingShardId() === s.id }">
+                            <div class="ts-shard-top">
+                                <div class="ts-shard-label">
+                                    {{ s.label }}
+                                    <span class="ts-chip ts-chip--kind">
+                                        {{ s.kind === 'Note' ? '备注' : s.kind === 'Milestone' ? '里程碑' : '信函' }}
+                                    </span>
+
+                                    @let mid = boundMilestoneIdOf(s);
+                                    @if (mid) {
+                                    <button type="button" class="ts-chip ts-chip--ms-link"
+                                        (click)="applyMilestoneFilter(mid)" title="按此里程碑筛选">
+                                        # {{ milestoneTitleById()[mid] }}
+                                    </button>
+                                    }
+
+                                    @if (s.kind === 'Letter' && s.letter) {
+                                    <span class="ts-chip ts-chip--kind" style="background:#fff; border-color:#ebeef5;">
+                                        {{ s.letter.type === 'Proposal' ? '提案' : s.letter.type === 'Change' ? '变更' :
+                                        '确认' }}
+                                        · v{{ s.letter.version }}
+                                    </span>
+                                    }
+
+                                    @if (s.seal?.entryHash) {
+                                    <span class="ts-chip ts-chip--hash" title="已封存验证">🔒 已封存</span>
+                                    }
+                                </div>
+
+                                <div class="ts-shard-top-right"
+                                    style="display:flex; flex-direction:column; align-items:flex-end; gap:0.4rem;">
+                                    <div class="ts-shard-meta" style="display:flex; gap:0.4rem;">
+                                        <span class="ts-chip ts-chip--side">
+                                            {{ s.side === 'Artist' ? '画师' : s.side === 'Client' ? '金主' : '双方' }}
+                                        </span>
+                                        <span class="ts-chip ts-chip--time">
+                                            {{ s.createdAt | date : 'yyyy-MM-dd HH:mm' }}
+                                        </span>
+                                    </div>
+
+                                    <div class="ts-shard-actions">
+                                        @if (s.kind === 'Milestone') {
+                                        <button type="button" class="ts-chip-btn"
+                                            (click)="applyMilestoneFilter(s.id)">聚焦</button>
+                                        }
+
+                                        @if (s.kind === 'Letter') {
+                                        <button type="button" class="ts-chip-btn"
+                                            (click)="copyLetterTextFromShard(s)">复制</button>
+                                        @if (!s.seal && s.letter?.status !== 'confirmed') {
+                                        <button type="button" class="ts-chip-btn"
+                                            (click)="markLetterSent(s.id)">标记发送</button>
+                                        <button type="button" class="ts-chip-btn"
+                                            (click)="confirmLetter(s.id, 'Artist')">确认 (画)</button>
+                                        <button type="button" class="ts-chip-btn"
+                                            (click)="confirmLetter(s.id, 'Client')">确认 (金)</button>
+                                        } @else if (!s.seal) {
+                                        <button type="button" class="ts-chip-btn"
+                                            (click)="createChangeLetterFrom(s)">发起变更</button>
+                                        }
+                                        }
+
+                                        @if (!s.seal) {
+                                        <button type="button" class="ts-chip-btn"
+                                            (click)="startEditShard(s)">编辑</button>
+                                        <button type="button" class="ts-chip-btn danger"
+                                            (click)="deleteShard(s.id)">删除</button>
+                                        <button type="button" class="ts-chip-btn" (click)="sealShardOnline(s.id)"
+                                            title="生成防篡改哈希并上传验证">🔒 封存</button>
+                                        } @else {
+                                        <button type="button" class="ts-chip-btn"
+                                            (click)="copyPublicReceipt(s)">回执</button>
+                                        <button type="button" class="ts-chip-btn danger"
+                                            (click)="revokeSealOnline(s)">撤销</button>
+                                        }
+                                    </div>
+                                </div>
+                            </div>
+
+                            @if (s.details) {
+                            <div class="ts-shard-details">{{ s.details }}</div>
+                            }
+
+                            @if (s.kind === 'Milestone' && (s.milestone?.dueAt || s.milestone?.status)) {
+                            <div class="ts-seal-inline">
+                                @if (s.milestone?.status) {
+                                状态：{{ s.milestone!.status === 'planned' ? '计划中' : s.milestone!.status === 'in_progress'
+                                ? '进行中' : '已完成' }}
+                                }
+                                @if (s.milestone?.dueAt) { · 截止：{{ s.milestone!.dueAt | date : 'yyyy-MM-dd' }} }
+                            </div>
+                            }
+
+                            @if (s.seal?.entryHash) {
+                            <div class="ts-seal-inline"
+                                style="background:#ecf5ff; color:#409eff; border:1px solid #d9ecff;">
+                                🔒 已封存于 {{ s.seal!.sealedAt | date:'yyyy-MM-dd HH:mm' }}
+                                <span style="font-family:monospace; font-size:0.7em; margin-left:4px;">{{
+                                    s.seal!.entryHash.slice(0, 10) }}...</span>
+                            </div>
+                            }
+
+                            <!-- artifacts -->
+                            <div class="ts-artifacts-inline">
+                                <div class="ts-artifacts-inline-title">📎 附件证据 (SHA-256 哈希)</div>
+
+                                @if (!s.seal) {
+                                <div class="ts-artifact-row">
+                                    <input class="ts-input ts-input--compact" type="text" placeholder="可选：文件备注"
+                                        [ngModel]="artifactNote()" (ngModelChange)="artifactNote.set($event)"
+                                        style="flex:1;" />
+                                    <label class="ts-btn ghost file-label"
+                                        style="padding: 0.3rem 0.8rem; font-size: 0.8rem;">
+                                        + 添加文件
+                                        <input type="file" multiple (change)="onArtifactFilesSelected($event, s.id)" />
+                                    </label>
+                                </div>
+                                } @else {
+                                <div style="font-size: 0.75rem; color: #909399; margin-bottom: 0.5rem;">
+                                    ℹ️ 记录已封存，无法再添加或修改附件以确保证据链完整。
+                                </div>
+                                }
+
+                                @if (s.artifacts?.length) {
+                                <ul class="ts-artifacts-inline-list">
+                                    @for (a of s.artifacts; track a.sha256; let ai = $index) {
+                                    <li class="ts-artifacts-inline-item">
+                                        <span class="ts-artifacts-inline-name" title="{{ a.name }}">{{ a.name }}</span>
+                                        <span class="ts-artifacts-inline-hash" title="{{ a.sha256 }}">{{
+                                            a.sha256.slice(0, 10) }}...</span>
+                                        <span style="font-size: 0.7rem; color: #909399;">{{ (a.size / 1024).toFixed(1)
+                                            }} KB</span>
+                                        @if (!s.seal) {
+                                        <button type="button" class="ts-chip-btn danger"
+                                            (click)="removeArtifact(s.id, ai)"
+                                            style="padding: 0.1rem 0.4rem; font-size: 0.7rem;">×</button>
+                                        }
+                                    </li>
+                                    }
+                                </ul>
+                                } @else {
+                                <div style="font-size: 0.8rem; color: #c0c4cc; font-style: italic;">暂无附件</div>
+                                }
+                            </div>
+                        </li>
+                        }
+                    </ul>
+                    }
+                </div>
+            </div>
+        </section>
+        } @else {
+        <section class="ts-panel ts-panel--empty"
+            style="display:flex; align-items:center; justify-content:center; color: var(--sd-muted);">
+            <div style="text-align: center;">
+                <div style="font-size: 3rem; margin-bottom: 1rem;">🎨</div>
+                <p>请选择或创建一个项目开始记录</p>
+            </div>
+        </section>
+        }
+    </main>
+
+    <!-- SEO Block 已移除 -->
+</div>

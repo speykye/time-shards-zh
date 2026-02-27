@@ -1,0 +1,60 @@
+@use '../../../styles/variables';
+
+:host {
+    display: block;
+    min-height: 100vh;
+    padding-top: 2.5rem;
+}
+
+
+.lp-hero {
+    padding: 0.6rem 0 1rem;
+    text-align: left;
+
+    .lp-actions {
+        display: flex;
+        gap: 0.6rem;
+        flex-wrap: wrap;
+        margin: 0.6rem 0 0.9rem;
+    }
+}
+
+.lp-tips {
+    margin-top: 1rem;
+    padding: 1rem;
+    background: rgba(255, 255, 255, 0.5);
+    border-radius: 1rem;
+    border: 1px dashed var(--border);
+
+    .muted {
+        margin: 0;
+        font-size: 0.9rem;
+    }
+}
+
+.muted {
+    color: rgba(47, 51, 49, 0.62);
+    font-size: 0.85rem;
+    margin-top: 0.3rem;
+}
+
+.sd-title {
+    font-size: 1.1rem;
+}
+
+.lp-footer-right {
+    display: inline-flex;
+    gap: 1.1rem;
+}
+
+// Responsive
+@media (max-width: 860px) {
+    :host {
+        padding: 1.5rem 1rem;
+    }
+
+    .lp-footer-right {
+        flex-direction: column;
+        gap: 0.8rem;
+    }
+}

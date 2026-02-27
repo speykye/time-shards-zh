@@ -1,0 +1,193 @@
+// src/styles/_utilities.scss
+
+@use './variables';
+
+// ===== Layout Container =====
+.sd-container {
+    max-width: 1080px;
+    margin: 0 auto;
+    background: var(--sd-surface);
+    border-radius: var(--sd-radius-lg);
+    padding: 1.8rem 2rem;
+    box-shadow: 0 18px 40px var(--sd-shadow), 0 0 0 1px rgba(255, 255, 255, 0.85);
+
+    @media (max-width: 860px) {
+        padding: 1.4rem 1.25rem;
+    }
+}
+
+// ===== Typography Helpers =====
+.sd-title {
+    margin: 0.9rem 0 0.4rem;
+    font-size: 2.2rem;
+    font-weight: 800;
+    letter-spacing: -0.02em;
+    color: var(--sd-text-strong);
+    line-height: 1.2;
+}
+
+.sd-subtitle {
+    display: block;
+    margin-top: 0.35rem;
+    font-size: 1.1rem;
+    font-weight: 600;
+    color: rgba(47, 51, 49, 0.85);
+}
+
+.sd-lead {
+    margin: 0.4rem 0 1rem;
+    font-size: 1.05rem;
+    line-height: 1.75;
+    color: rgba(47, 51, 49, 0.78);
+    max-width: 52rem;
+}
+
+.sd-section-title {
+    margin: 0 0 0.6rem;
+    font-size: 1.05rem;
+    font-weight: 700;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    color: var(--sd-muted);
+}
+
+// ===== Buttons =====
+.btn {
+    border-radius: var(--sd-radius-full);
+    padding: 0.55rem 1.2rem;
+    font-size: 0.95rem;
+    font-weight: 600;
+    border: none;
+    cursor: pointer;
+    text-decoration: none;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    transition: transform 0.2s, box-shadow 0.2s;
+    box-shadow: 0 0 0 1px var(--sd-border);
+
+    &:hover {
+        transform: translateY(-1px);
+    }
+
+    &.primary {
+        background: linear-gradient(145deg, var(--sd-accent-1), var(--sd-accent-2));
+        color: var(--sd-accent-ink);
+        box-shadow: 0 12px 22px rgba(40, 55, 50, 0.20), 0 0 0 1px rgba(255, 255, 255, 0.85);
+
+        &:hover {
+            box-shadow: 0 14px 26px rgba(40, 55, 50, 0.25), 0 0 0 1px rgba(255, 255, 255, 0.9);
+        }
+    }
+
+    &.ghost {
+        background: rgba(255, 255, 255, 0.78);
+        color: var(--sd-text);
+
+        &:hover {
+            background: rgba(255, 255, 255, 0.95);
+        }
+    }
+
+    &.small {
+        padding: 0.35rem 0.8rem;
+        font-size: 0.85rem;
+    }
+}
+
+// ===== Cards & Grid =====
+.sd-grid {
+    display: grid;
+    gap: 0.9rem;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+
+    @media (max-width: 860px) {
+        grid-template-columns: 1fr;
+    }
+}
+
+.card {
+    background: var(--sd-card);
+    border-radius: var(--sd-radius-md);
+    padding: 1.1rem;
+    box-shadow: 0 12px 28px var(--sd-shadow), 0 0 0 1px rgba(255, 255, 255, 0.82);
+    transition: transform 0.2s;
+
+    &:hover {
+        transform: translateY(-2px);
+        cursor: pointer;
+    }
+
+    h3 {
+        margin: 0 0 0.4rem;
+        font-size: 1.05rem;
+        font-weight: 700;
+        color: var(--sd-text-strong);
+    }
+
+    p {
+        margin: 0;
+        color: rgba(47, 51, 49, 0.75);
+        line-height: 1.65;
+        font-size: 0.95rem;
+    }
+}
+
+// ===== Badges & Meta =====
+.sd-badge {
+    display: inline-flex;
+    padding: 0.25rem 0.7rem;
+    border-radius: var(--sd-radius-full);
+    font-size: 0.78rem;
+    letter-spacing: 0.04em;
+    font-weight: 600;
+    background: rgba(255, 255, 255, 0.75);
+    box-shadow: 0 0 0 1px var(--sd-border);
+    color: var(--sd-muted);
+}
+
+.sd-meta {
+    display: flex;
+    gap: 0.8rem;
+    flex-wrap: wrap;
+    color: rgba(47, 51, 49, 0.72);
+    font-size: 0.86rem;
+    font-weight: 500;
+}
+
+// ===== Sections =====
+.sd-section {
+    margin-top: 1.4rem;
+    padding-top: 1.2rem;
+    border-top: 1px solid rgba(255, 255, 255, 0.7);
+}
+
+// ===== Footer =====
+.sd-footer {
+    margin-top: 1.6rem;
+    padding-top: 1.2rem;
+    border-top: 1px solid var(--sd-border);
+    display: flex;
+    justify-content: space-between;
+    gap: 1rem;
+    flex-wrap: wrap;
+    align-items: center;
+
+    @media (max-width: 860px) {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 1.5rem;
+    }
+}
+
+.sd-link {
+    color: rgba(47, 51, 49, 0.75);
+    text-decoration: none;
+    font-size: 0.9rem;
+    font-weight: 500;
+
+    &:hover {
+        color: var(--sd-text-strong);
+        text-decoration: underline;
+    }
+}

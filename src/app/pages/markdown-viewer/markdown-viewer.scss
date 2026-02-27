@@ -1,0 +1,113 @@
+.ts-markdown-content {
+    font-size: 0.95rem;
+    line-height: 1.7;
+    color: var(--sd-text);
+
+    h1,
+    h2,
+    h3,
+    h4 {
+        margin-top: 1.5em;
+        margin-bottom: 0.8em;
+        font-weight: 700;
+        color: var(--sd-text-strong);
+        line-height: 1.3;
+    }
+
+    h1 {
+        font-size: 1.8rem;
+        border-bottom: 1px solid var(--sd-border);
+        padding-bottom: 0.5em;
+    }
+
+    h2 {
+        font-size: 1.4rem;
+    }
+
+    h3 {
+        font-size: 1.1rem;
+    }
+
+    p {
+        margin-bottom: 1em;
+    }
+
+    ul,
+    ol {
+        margin-bottom: 1em;
+        padding-left: 1.5em;
+    }
+
+    li {
+        margin-bottom: 0.4em;
+    }
+
+    code {
+        background: #f5f7fa;
+        padding: 0.2em 0.4em;
+        border-radius: 4px;
+        font-family: ui-monospace, monospace;
+        font-size: 0.85em;
+        color: #e6a23c;
+    }
+
+    pre {
+        background: #2d3748;
+        color: #fff;
+        padding: 1em;
+        border-radius: 8px;
+        overflow-x: auto;
+        margin-bottom: 1em;
+    }
+
+    pre code {
+        background: transparent;
+        color: inherit;
+        padding: 0;
+    }
+
+    blockquote {
+        border-left: 4px solid var(--sd-accent-1);
+        margin: 1em 0;
+        padding: 0.5em 1em;
+        background: #ecf5ff;
+        color: #606266;
+        border-radius: 0 4px 4px 0;
+    }
+
+    a {
+        color: var(--sd-accent-1);
+        text-decoration: none;
+        border-bottom: 1px dashed var(--sd-accent-1);
+        transition: all 0.2s;
+
+        &:hover {
+            color: var(--sd-accent-2);
+            border-bottom-style: solid;
+        }
+    }
+
+    hr {
+        border: none;
+        border-top: 1px solid var(--sd-border);
+        margin: 2em 0;
+    }
+
+    table {
+        width: 100%;
+        border-collapse: collapse;
+        margin-bottom: 1em;
+
+        th,
+        td {
+            border: 1px solid var(--sd-border);
+            padding: 0.6em;
+            text-align: left;
+        }
+
+        th {
+            background: #f5f7fa;
+            font-weight: 600;
+        }
+    }
+}

@@ -1,0 +1,28 @@
+:root {
+    // ===== Morandi Palette =====
+    --sd-bg: #f5f7fa;
+    --sd-surface: #ffffff;
+    --sd-card: #ffffff;
+    --sd-text: #303133;
+    --sd-text-strong: #1f2d3d;
+    --sd-muted: #909399;
+    --sd-border: #dcdfe6;
+    --sd-border-strong: #c0c4cc;
+    --sd-shadow: rgba(0, 0, 0, 0.08);
+    --sd-accent-1: #409eff; // 调整为更通用的蓝色系，或保留原色
+    --sd-accent-2: #66b1ff;
+    --sd-accent-ink: #ffffff;
+    --sd-radius-sm: 4px;
+    --sd-radius-md: 8px;
+    --sd-radius-lg: 12px;
+    --sd-radius-full: 9999px;
+
+    display: block;
+    padding: 2.5rem 1.25rem;
+    overflow: auto;
+    background: var(--sd-bg);
+    font-family: var(--sd-font-family);
+    color: var(--sd-text);
+    // ===== Typography =====
+    --sd-font-family: system-ui, -apple-system, "PingFang SC", "Microsoft YaHei", "SF Pro Text", "Segoe UI", sans-serif;
+}
