@@ -45,6 +45,12 @@
 .lp-footer-right {
     display: inline-flex;
     gap: 1.1rem;
+
+    a {
+        svg {
+            width: 20px;
+        }
+    }
 }
 
 // Responsive
