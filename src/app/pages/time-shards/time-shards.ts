@@ -1,12 +1,10 @@
 import { Component, computed, effect, inject, PLATFORM_ID, signal } from '@angular/core';
-import { CommonModule, isPlatformBrowser, NgClass, DatePipe } from '@angular/common';
+import { CommonModule, isPlatformBrowser, NgClass, DatePipe, Location } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { TimeShardsProofService, SealReceipt } from './time-shards.service';
 
 const STORAGE_KEY = 'time-shards-v2';
 const GENESIS_HASH = '0'.repeat(64);
-
-const PROOF_API_BASE = 'https://ythwgawpxtliabqxocbx.supabase.co/functions/v1';
 
 type ShardSide = 'Artist' | 'Client' | 'Both';
 type FilterSide = 'All' | ShardSide;
@@ -25,12 +23,12 @@ interface ArtifactMeta {
 }
 
 interface SealMeta {
-  sealedAt: string;       // server time
-  prevHash: string;       // hex64
-  entryHash: string;      // hex64
-  entryVersion: number;   // 1
-  toolVersion: number;    // 2
-  signature: string;      // base64url
+  sealedAt: string; // server time
+  prevHash: string; // hex64
+  entryHash: string; // hex64
+  entryVersion: number; // 1
+  toolVersion: number; // 2
+  signature: string; // base64url
 }
 
 interface LetterFields {
@@ -110,6 +108,7 @@ export class TimeShards {
   private platformId = inject(PLATFORM_ID);
   private isBrowser = isPlatformBrowser(this.platformId);
   private proofService = inject(TimeShardsProofService);
+  private location = inject(Location);
 
   // ---------- state ----------
   projects = signal<TimeShardProject[]>([]);
@@ -153,6 +152,14 @@ export class TimeShards {
 
   // editing
   editingShardId = signal<string | null>(null);
+
+  showExportSummary = signal(false);
+  exportStats = signal<{
+    projectCount: number;
+    shardCount: number;
+    projects: { name: string; count: number }[];
+    fileName: string;
+  } | null>(null);
 
   // ---------- computeds ----------
   hasProjects = computed(() => this.projects().length > 0);
@@ -198,7 +205,7 @@ export class TimeShards {
 
     for (const s of this.shardsForCurrentProject()) {
       if (s.kind === 'Milestone') continue;
-      const bound = s.kind === 'Letter' ? s.letter?.milestoneId ?? s.milestoneId : s.milestoneId;
+      const bound = s.kind === 'Letter' ? (s.letter?.milestoneId ?? s.milestoneId) : s.milestoneId;
       if (bound) map[bound] = (map[bound] ?? 0) + 1;
     }
     return map;
@@ -221,7 +228,12 @@ export class TimeShards {
 
     if (q) {
       list = list.filter((s) => {
-        const extra = s.kind === 'Letter' ? JSON.stringify(s.letter?.fields ?? {}) : s.kind === 'Milestone' ? JSON.stringify(s.milestone ?? {}) : '';
+        const extra =
+          s.kind === 'Letter'
+            ? JSON.stringify(s.letter?.fields ?? {})
+            : s.kind === 'Milestone'
+              ? JSON.stringify(s.milestone ?? {})
+              : '';
         const seal = s.seal ? JSON.stringify(s.seal) : '';
         return (
           (s.label || '').toLowerCase().includes(q) ||
@@ -236,11 +248,13 @@ export class TimeShards {
       list = list.filter((s) => {
         if (mf === 'unbound') {
           if (s.kind === 'Milestone') return false;
-          const bound = s.kind === 'Letter' ? s.letter?.milestoneId ?? s.milestoneId : s.milestoneId;
+          const bound =
+            s.kind === 'Letter' ? (s.letter?.milestoneId ?? s.milestoneId) : s.milestoneId;
           return !bound;
         }
         if (s.kind === 'Milestone') return s.id === mf;
-        const bound = s.kind === 'Letter' ? s.letter?.milestoneId ?? s.milestoneId : s.milestoneId;
+        const bound =
+          s.kind === 'Letter' ? (s.letter?.milestoneId ?? s.milestoneId) : s.milestoneId;
         return bound === mf;
       });
     }
@@ -284,9 +298,17 @@ export class TimeShards {
     });
   }
 
+  goBack() {
+    this.location.back();
+  }
+
   // ---------- utils ----------
   private newId(): string {
-    if (this.isBrowser && typeof crypto !== 'undefined' && typeof crypto.randomUUID === 'function') {
+    if (
+      this.isBrowser &&
+      typeof crypto !== 'undefined' &&
+      typeof crypto.randomUUID === 'function'
+    ) {
       return crypto.randomUUID();
     }
     return 'id-' + Math.random().toString(36).slice(2);
@@ -767,7 +789,9 @@ export class TimeShards {
     }
 
     if (l.status === 'confirmed' && l.confirmedAt) {
-      lines.push(`(确认于 ${l.confirmedAt}${l.confirmedBy ? ` 由 ${l.confirmedBy === 'Artist' ? '创作者' : l.confirmedBy === 'Client' ? '客户' : '双方'}` : ''})`);
+      lines.push(
+        `(确认于 ${l.confirmedAt}${l.confirmedBy ? ` 由 ${l.confirmedBy === 'Artist' ? '创作者' : l.confirmedBy === 'Client' ? '客户' : '双方'}` : ''})`,
+      );
     }
 
     return lines.join('\n');
@@ -825,7 +849,9 @@ export class TimeShards {
     if (typeof v !== 'object') return JSON.stringify(v);
     if (Array.isArray(v)) return '[' + v.map((x) => this.stableStringify(x)).join(',') + ']';
     const keys = Object.keys(v).sort();
-    return '{' + keys.map((k) => JSON.stringify(k) + ':' + this.stableStringify(v[k])).join(',') + '}';
+    return (
+      '{' + keys.map((k) => JSON.stringify(k) + ':' + this.stableStringify(v[k])).join(',') + '}'
+    );
   }
 
   private async sha256Hex(text: string): Promise<string> {
@@ -839,10 +865,14 @@ export class TimeShards {
     const sealed = project.shards
       .filter((s) => !!s.seal?.entryHash)
       .sort((a, b) => (b.seal!.sealedAt || '').localeCompare(a.seal!.sealedAt || ''));
-    return sealed.length ? (sealed[0].seal!.entryHash) : GENESIS_HASH;
+    return sealed.length ? sealed[0].seal!.entryHash : GENESIS_HASH;
   }
 
-  private async computeEntryHash(project: TimeShardProject, shard: TimeShard, prevHash: string): Promise<string> {
+  private async computeEntryHash(
+    project: TimeShardProject,
+    shard: TimeShard,
+    prevHash: string,
+  ): Promise<string> {
     const artifactsHashes = (shard.artifacts ?? []).map((a) => a.sha256);
     const payload = {
       tool: 'time-shards',
@@ -895,7 +925,11 @@ export class TimeShards {
     const artifacts = (shard.artifacts ?? []).map((a) => a.sha256);
     try {
       const result = await this.proofService.sealEntry({
-        entryHash, prevHash, artifacts, toolVersion: 2, entryVersion: 1
+        entryHash,
+        prevHash,
+        artifacts,
+        toolVersion: 2,
+        entryVersion: 1,
       });
 
       this.updateShard(shardId, (s) => ({
@@ -957,16 +991,66 @@ export class TimeShards {
 
   // ---------- export / import ----------
   exportJson() {
-    if (!this.isBrowser) return;
-    const payload: ExportPayload = { version: 2, exportedAt: new Date().toISOString(), projects: this.projects() };
-    const json = JSON.stringify(payload, null, 2);
-    const blob = new Blob([json], { type: 'application/json' });
+    const currentProjects = this.projects();
+
+    // 1. 基础校验
+    if (!currentProjects || currentProjects.length === 0) {
+      alert('暂无项目可导出。请先创建项目并添加记录。');
+      return;
+    }
+
+    // 2. 统计数据 (用于展示给用户)
+    const projectCount = currentProjects.length;
+    const shardCount = currentProjects.reduce((acc, p) => acc + p.shards.length, 0);
+    const dateStr = new Date().toISOString().slice(0, 10); // YYYY-MM-DD
+
+    // 生成友好的文件名
+    const fileName = `TimeShards_${projectCount}个项目_${shardCount}条记录_${dateStr}.json`;
+
+    // 准备预览数据 (只取名称和数量，保护隐私且清晰)
+    const previewList = currentProjects.map((p) => ({
+      name: p.name,
+      count: p.shards.length,
+    }));
+
+    // 3. 序列化数据 (使用 2 空格缩进，方便人类阅读，同时保持 UTF-8)
+    // 注意：JSON.stringify 默认处理 Unicode，但在某些旧系统可能需要 BOM，现代浏览器通常不需要
+    const jsonString = JSON.stringify(currentProjects, null, 2);
+    const blob = new Blob([jsonString], { type: 'application/json;charset=utf-8' });
+
+    // 4. 触发下载
     const url = URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = `time-shards-v2_${new Date().toISOString().slice(0, 10)}.json`;
-    a.click();
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = fileName;
+
+    // 模拟点击
+    document.body.appendChild(link);
+    link.click();
+
+    // 清理
+    document.body.removeChild(link);
     URL.revokeObjectURL(url);
+
+    // 5. 显示成功摘要模态框 (关键体验提升)
+    this.exportStats.set({
+      projectCount,
+      shardCount,
+      projects: previewList,
+      fileName,
+    });
+
+    // 延迟一点点显示，让下载动作先发生，避免阻塞 UI
+    setTimeout(() => {
+      this.showExportSummary.set(true);
+    }, 300);
+  }
+
+  // 新增：关闭摘要模态框
+  closeExportSummary() {
+    this.showExportSummary.set(false);
+    // 可选：清空统计信息以节省内存
+    setTimeout(() => this.exportStats.set(null), 300);
   }
 
   onImportFileSelected(event: Event) {
@@ -979,7 +1063,7 @@ export class TimeShards {
     reader.onload = () => {
       try {
         const parsed = JSON.parse(String(reader.result));
-        const projectsRaw = Array.isArray(parsed) ? parsed : (parsed.projects || []);
+        const projectsRaw = Array.isArray(parsed) ? parsed : parsed.projects || [];
         const safe = this.importProjects(projectsRaw, parsed.version || 1);
         this.projects.set(safe);
         this.currentProjectIndex.set(safe.length ? 0 : -1);
@@ -1011,25 +1095,25 @@ export class TimeShards {
 
     const artifacts: ArtifactMeta[] | undefined = Array.isArray(s.artifacts)
       ? s.artifacts.map((a: any) => ({
-        name: String(a.name ?? 'file'),
-        size: Number(a.size ?? 0),
-        mime: String(a.mime ?? 'application/octet-stream'),
-        sha256: String(a.sha256 ?? ''),
-        hashedAt: typeof a.hashedAt === 'string' ? a.hashedAt : createdAt,
-        note: typeof a.note === 'string' ? a.note : undefined,
-      }))
+          name: String(a.name ?? 'file'),
+          size: Number(a.size ?? 0),
+          mime: String(a.mime ?? 'application/octet-stream'),
+          sha256: String(a.sha256 ?? ''),
+          hashedAt: typeof a.hashedAt === 'string' ? a.hashedAt : createdAt,
+          note: typeof a.note === 'string' ? a.note : undefined,
+        }))
       : undefined;
 
     const seal: SealMeta | undefined =
       s.seal && typeof s.seal === 'object'
         ? {
-          sealedAt: String(s.seal.sealedAt ?? ''),
-          prevHash: String(s.seal.prevHash ?? GENESIS_HASH),
-          entryHash: String(s.seal.entryHash ?? ''),
-          entryVersion: Number(s.seal.entryVersion ?? 1),
-          toolVersion: Number(s.seal.toolVersion ?? 2),
-          signature: String(s.seal.signature ?? ''),
-        }
+            sealedAt: String(s.seal.sealedAt ?? ''),
+            prevHash: String(s.seal.prevHash ?? GENESIS_HASH),
+            entryHash: String(s.seal.entryHash ?? ''),
+            entryVersion: Number(s.seal.entryVersion ?? 1),
+            toolVersion: Number(s.seal.toolVersion ?? 2),
+            signature: String(s.seal.signature ?? ''),
+          }
         : undefined;
 
     const base: TimeShard = {
@@ -1054,7 +1138,9 @@ export class TimeShards {
     if (base.kind === 'Milestone') {
       base.milestone = {
         dueAt: typeof s.milestone?.dueAt === 'string' ? s.milestone.dueAt : undefined,
-        status: (['planned', 'in_progress', 'done'] as const).includes(s.milestone?.status) ? s.milestone.status : 'planned',
+        status: (['planned', 'in_progress', 'done'] as const).includes(s.milestone?.status)
+          ? s.milestone.status
+          : 'planned',
       };
       base.milestoneId = undefined;
       base.letter = undefined;
@@ -1073,30 +1159,41 @@ export class TimeShards {
       };
 
       base.letter = {
-        type: (['Proposal', 'Change', 'Acceptance'] as LetterType[]).includes(s.letter?.type) ? s.letter.type : 'Proposal',
+        type: (['Proposal', 'Change', 'Acceptance'] as LetterType[]).includes(s.letter?.type)
+          ? s.letter.type
+          : 'Proposal',
         milestoneId: typeof s.letter?.milestoneId === 'string' ? s.letter.milestoneId : undefined,
-        baseLetterId: typeof s.letter?.baseLetterId === 'string' ? s.letter.baseLetterId : undefined,
+        baseLetterId:
+          typeof s.letter?.baseLetterId === 'string' ? s.letter.baseLetterId : undefined,
         version: Number(s.letter?.version ?? 1),
-        status: (['draft', 'sent', 'confirmed'] as LetterStatus[]).includes(s.letter?.status) ? s.letter.status : 'draft',
+        status: (['draft', 'sent', 'confirmed'] as LetterStatus[]).includes(s.letter?.status)
+          ? s.letter.status
+          : 'draft',
         sentAt: typeof s.letter?.sentAt === 'string' ? s.letter.sentAt : undefined,
         confirmedAt: typeof s.letter?.confirmedAt === 'string' ? s.letter.confirmedAt : undefined,
-        confirmedBy: (['Artist', 'Client', 'Both'] as ShardSide[]).includes(s.letter?.confirmedBy) ? s.letter.confirmedBy : undefined,
+        confirmedBy: (['Artist', 'Client', 'Both'] as ShardSide[]).includes(s.letter?.confirmedBy)
+          ? s.letter.confirmedBy
+          : undefined,
         fields: f,
         lockedSnapshot: s.letter?.lockedSnapshot
           ? {
-            label: String(s.letter.lockedSnapshot.label ?? base.label),
-            details: String(s.letter.lockedSnapshot.details ?? base.details),
-            fields: {
-              deliverables: String(s.letter.lockedSnapshot.fields?.deliverables ?? f.deliverables),
-              usage: String(s.letter.lockedSnapshot.fields?.usage ?? f.usage),
-              deadline: String(s.letter.lockedSnapshot.fields?.deadline ?? f.deadline),
-              revisions: String(s.letter.lockedSnapshot.fields?.revisions ?? f.revisions),
-              acceptance: String(s.letter.lockedSnapshot.fields?.acceptance ?? f.acceptance),
-              scopeBoundaries: String(s.letter.lockedSnapshot.fields?.scopeBoundaries ?? f.scopeBoundaries),
-              references: String(s.letter.lockedSnapshot.fields?.references ?? f.references),
-            },
-            lockedAt: String(s.letter.lockedSnapshot.lockedAt ?? base.createdAt),
-          }
+              label: String(s.letter.lockedSnapshot.label ?? base.label),
+              details: String(s.letter.lockedSnapshot.details ?? base.details),
+              fields: {
+                deliverables: String(
+                  s.letter.lockedSnapshot.fields?.deliverables ?? f.deliverables,
+                ),
+                usage: String(s.letter.lockedSnapshot.fields?.usage ?? f.usage),
+                deadline: String(s.letter.lockedSnapshot.fields?.deadline ?? f.deadline),
+                revisions: String(s.letter.lockedSnapshot.fields?.revisions ?? f.revisions),
+                acceptance: String(s.letter.lockedSnapshot.fields?.acceptance ?? f.acceptance),
+                scopeBoundaries: String(
+                  s.letter.lockedSnapshot.fields?.scopeBoundaries ?? f.scopeBoundaries,
+                ),
+                references: String(s.letter.lockedSnapshot.fields?.references ?? f.references),
+              },
+              lockedAt: String(s.letter.lockedSnapshot.lockedAt ?? base.createdAt),
+            }
           : undefined,
       };
 
@@ -1113,7 +1210,10 @@ export class TimeShards {
   // ---------- copy ----------
   private copyText(text: string, okMsg: string) {
     if (this.isBrowser && navigator.clipboard) {
-      navigator.clipboard.writeText(text).then(() => alert(okMsg)).catch(() => this.fallbackCopy(text));
+      navigator.clipboard
+        .writeText(text)
+        .then(() => alert(okMsg))
+        .catch(() => this.fallbackCopy(text));
     } else {
       this.fallbackCopy(text);
     }

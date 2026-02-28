@@ -1,0 +1,15 @@
+.sd-container {
+    position: relative;
+
+    .close {
+        width: 32px;
+        height: 32px;
+        color: #ED0100;
+        position: absolute;
+        right: 2rem;
+
+        &:hover {
+            cursor: pointer;
+        }
+    }
+}

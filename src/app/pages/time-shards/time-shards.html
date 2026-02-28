@@ -1,4 +1,16 @@
 <div class="ts-root" id="ts-root">
+    <div class="ts-rider-bookmark" (click)="goBack()">
+        <div class="ts-bookmark-tab">
+            <!-- 图标：返回箭头 -->
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"
+                stroke-linecap="round" stroke-linejoin="round">
+                <path d="M19 12H5M12 19l-7-7 7-7" />
+            </svg>
+            <span class="ts-bookmark-text">返回</span>
+        </div>
+        <!-- 装饰用的三角形折角效果 -->
+        <div class="ts-bookmark-fold"></div>
+    </div>
     <!-- ===== Header ===== -->
     <header class="ts-header">
         <div class="ts-title-row">
@@ -519,6 +531,53 @@
         </section>
         }
     </main>
+    <!-- ===== Export Summary Modal (导出成功摘要) ===== -->
+    @if (showExportSummary()) {
+    <div class="ts-modal-overlay" (click)="closeExportSummary()">
+        <div class="ts-modal-card" (click)="$event.stopPropagation()">
 
-    <!-- SEO Block 已移除 -->
+            <!-- Header -->
+            <div class="ts-modal-header">
+                <span class="ts-modal-icon">✅</span>
+                <h3>备份已成功生成</h3>
+                <button class="ts-btn subtle" (click)="closeExportSummary()"
+                    style="border:none; padding:0.5rem;">✕</button>
+            </div>
+
+            <!-- Body -->
+            <div class="ts-modal-body">
+                <p class="ts-summary-text">
+                    已为您保存 <strong>{{ exportStats()?.projectCount }}</strong> 个项目，
+                    共 <strong>{{ exportStats()?.shardCount }}</strong> 条记录。
+                    <br />
+                    <span class="ts-hint">
+                        💡 提示：JSON 文件是数据备份，请勿手动编辑。如有需要查看内容，请使用“导入”功能重新加载。
+                    </span>
+                </p>
+
+                <!-- 项目预览列表 -->
+                <div class="ts-preview-list">
+                    <div class="ts-preview-title">包含项目：</div>
+                    @for (p of exportStats()?.projects; track p.name) {
+                    <div class="ts-preview-item">
+                        <span class="ts-preview-name">{{ p.name }}</span>
+                        <span class="ts-preview-meta">{{ p.count }} 条记录</span>
+                    </div>
+                    }
+                </div>
+
+                <!-- 文件信息 -->
+                <div class="ts-file-info">
+                    📄 文件名：<code>{{ exportStats()?.fileName }}</code>
+                </div>
+            </div>
+
+            <!-- Footer -->
+            <div class="ts-modal-footer">
+                <button class="ts-btn primary" (click)="closeExportSummary()">知道了</button>
+            </div>
+
+        </div>
+    </div>
+    }
 </div>

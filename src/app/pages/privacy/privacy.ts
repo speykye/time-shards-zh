@@ -1,5 +1,6 @@
-import { Component } from '@angular/core';
+import { Component, inject } from '@angular/core';
 import { MarkdownViewer } from '../markdown-viewer/markdown-viewer';
+import { Location } from '@angular/common';
 
 @Component({
   selector: 'app-privacy',
@@ -8,6 +9,7 @@ import { MarkdownViewer } from '../markdown-viewer/markdown-viewer';
   styleUrl: './privacy.scss',
 })
 export class Privacy {
+  private location = inject(Location);
   html = `
 # 🛡️ Time-Shards 隐私政策
 
@@ -71,4 +73,8 @@ Time-Shards 是一个通用工具，不针对特定年龄段。但由于无需�
 *   **项目主页**：https://github.com/speykye/time-shards-zh/issues
 *   **反馈邮箱**：1207306758@qq.com
 `;
+
+  back() {
+    this.location.back();
+  }
 }

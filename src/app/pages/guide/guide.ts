@@ -1,5 +1,6 @@
-import { Component } from '@angular/core';
+import { Component, inject } from '@angular/core';
 import { MarkdownViewer } from '../markdown-viewer/markdown-viewer';
+import { Location } from '@angular/common';
 
 @Component({
   selector: 'app-guide',
@@ -9,6 +10,7 @@ import { MarkdownViewer } from '../markdown-viewer/markdown-viewer';
   standalone: true,
 })
 export class Guide {
+  private location = inject(Location);
   html = `
 # 📘 Time-Shards 使用指南：给画师与金主的“防扯皮”记事本
 
@@ -137,4 +139,7 @@ A: 没关系！**你自己用就行**。你只需要把生成的“信函文本�
 
 **现在，去创建你的第一个项目吧！** 🎨
   `;
+  back() {
+    this.location.back();
+  }
 }

@@ -1,4 +1,5 @@
-import { Component, Input, OnChanges, SimpleChanges, ViewEncapsulation } from '@angular/core';
+import { Component, Input, SimpleChanges, PLATFORM_ID, inject } from '@angular/core';
+import { isPlatformBrowser } from '@angular/common';
 import { DomSanitizer, SafeHtml } from '@angular/platform-browser';
 import { marked } from 'marked';
 import DOMPurify from 'dompurify';
@@ -12,6 +13,8 @@ import DOMPurify from 'dompurify';
 })
 export class MarkdownViewer {
   @Input() markdown: string = '';
+  private platformId = inject(PLATFORM_ID);
+  private isBrowser = isPlatformBrowser(this.platformId);
   safeHtml: SafeHtml = '';
 
   constructor(private sanitizer: DomSanitizer) { }
@@ -23,6 +26,7 @@ export class MarkdownViewer {
   }
 
   private renderMarkdown(): void {
+    if (!this.isBrowser) return;
     if (!this.markdown) {
       this.safeHtml = '';
       return;
