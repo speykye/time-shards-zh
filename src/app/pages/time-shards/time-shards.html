@@ -38,6 +38,23 @@
     <main class="ts-main">
         <!-- ===== Sidebar: Projects ===== -->
         <section class="ts-sidebar">
+            <div class="ts-card">
+                <div class="ts-section-title">工具箱</div>
+
+                <!-- 导航按钮组 -->
+                <div class="ts-nav-list">
+                    <button class="ts-nav-item" [class.active]="currentView() === 'timeline'"
+                        (click)="switchView('timeline')">
+                        <span>📜</span> 项目时间轴
+                    </button>
+
+                    <button class="ts-nav-item" [class.active]="currentView() === 'calculator'"
+                        (click)="switchView('calculator')">
+                        <span>🧮</span> 费率计算器
+                    </button>
+                </div>
+            </div>
+            @if(currentView() === 'timeline') {
             <h2 class="ts-section-title">我的项目</h2>
 
             @if (projects().length) {
@@ -58,7 +75,6 @@
                 <p style="font-size: 0.8rem; margin-top: 0.5rem;">在下方创建您的第一个委托项目吧</p>
             </div>
             }
-
             <div class="ts-new-project">
                 <label class="ts-input-label">新建项目</label>
                 <div class="ts-new-project-row">
@@ -73,9 +89,10 @@
                 </button>
                 }
             </div>
+            }
         </section>
-
         <!-- ===== Right panel ===== -->
+        @if (currentView() === 'timeline') {
         @if (currentProject(); as cp) {
         <section class="ts-panel">
             <!-- ===== Form Card ===== -->
@@ -530,6 +547,85 @@
             </div>
         </section>
         }
+        }
+        @if (currentView() === 'calculator') {
+        <div class="ts-panel">
+
+            <!-- 头部 -->
+            <div class="ts-card ts-log-card" style="padding: 1.5rem;">
+                <div class="ts-log-header">
+                    <h2>🧮 费率计算器</h2>
+                    <button class="ts-btn subtle" (click)="resetCalculator()">重置</button>
+                </div>
+
+                <!-- 模式切换 -->
+                <div class="ts-calc-mode-switch">
+                    <button class="ts-filter-chip" [class.active]="calcMode() === 'forward'"
+                        (click)="calcMode.set('forward')">
+                        正算 (税前 → 到手)
+                    </button>
+                    <button class="ts-filter-chip" [class.active]="calcMode() === 'backward'"
+                        (click)="calcMode.set('backward')">
+                        反算 (到手 → 税前)
+                    </button>
+                </div>
+
+                <!-- 输入区域 -->
+                <div class="ts-form-grid" style="margin-top: 1.5rem;">
+                    <label class="ts-input-label">
+                        {{ calcMode() === 'forward' ? '税前金额 (元)' : '期望到手 (元)' }}
+                    </label>
+                    <div class="ts-input-wrapper">
+                        <span class="ts-input-prefix">¥</span>
+                        <input type="number" class="ts-input" [value]="inputAmount()"
+                            (input)="inputAmount.set(+($event.target).value)" placeholder="0.00" step="0.01" />
+                    </div>
+
+                    <label class="ts-input-label">税率 (%)</label>
+                    <input type="number" class="ts-input" [value]="taxRate() * 100"
+                        (input)="taxRate.set(+($event.target).value / 100)" step="0.1" />
+
+                    <label class="ts-input-label">平台抽成 (%)</label>
+                    <input type="number" class="ts-input" [value]="platformRate() * 100"
+                        (input)="platformRate.set(+($any($event.target).value) / 100)" step="0.1" />
+                </div>
+
+                <!-- 结果展示 -->
+                @if (calculationResult(); as res) {
+                @if (res['error']) {
+                <div class="ts-alert-danger">{{ res['error'] }}</div>
+                } @else {
+                <div class="ts-calc-result-box">
+                    <div class="ts-result-row main">
+                        <span>税前总额</span>
+                        <span class="ts-result-value">¥ {{ res.preTax }}</span>
+                    </div>
+                    <div class="ts-result-row">
+                        <span>平台扣除 ({{ platformRate() * 100 }}%)</span>
+                        <span class="ts-result-value text-danger">- ¥ {{ res.platformFee }}</span>
+                    </div>
+                    <div class="ts-result-row">
+                        <span>税费估算 ({{ taxRate() * 100 }}%)</span>
+                        <span class="ts-result-value text-danger">- ¥ {{ res.taxFee }}</span>
+                    </div>
+                    <div class="ts-divider"></div>
+                    <div class="ts-result-row highlight">
+                        <span>预计到手</span>
+                        <span class="ts-result-value text-success">¥ {{ res.postTax }}</span>
+                    </div>
+                </div>
+
+                <p class="ts-hint-text">
+                    💡 提示：此计算仅供参考，实际扣费请以平台账单为准。数据仅在本地计算，不会上传。
+                </p>
+                }
+                } @else {
+                <div class="ts-empty-text">输入金额查看计算结果</div>
+                }
+            </div>
+        </div>
+        }
+
     </main>
     <!-- ===== Export Summary Modal (导出成功摘要) ===== -->
     @if (showExportSummary()) {

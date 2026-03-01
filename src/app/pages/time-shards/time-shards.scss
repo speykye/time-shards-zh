@@ -470,9 +470,8 @@
   flex-direction: column;
   overflow: hidden;
   background: #fafafa;
-}
 
-.ts-log-header {
+  .ts-log-header {
   flex-shrink: 0;
   display: flex;
   justify-content: space-between;
@@ -481,6 +480,9 @@
   margin-bottom: 0.75rem;
   flex-wrap: wrap;
 }
+
+}
+
 
 .ts-log-controls {
   display: flex;
@@ -832,6 +834,7 @@
   right: 0;
   bottom: 0;
   background: rgba(0, 0, 0, 0.4);
+  -webkit-backdrop-filter:blur(2px);
   backdrop-filter: blur(2px);
   display: flex;
   align-items: center;
@@ -869,6 +872,136 @@
   .ts-modal-icon {
     font-size: 1.5rem;
   }
+}
+
+/* --- Navigation Items (Sidebar) --- */
+.ts-nav-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.ts-nav-item {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  width: 100%;
+  padding: 0.75rem 1rem;
+  border-radius: var(--sd-radius-md);
+  border: 1px solid transparent;
+  background: transparent;
+  color: var(--sd-text);
+  font-size: 0.9rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  text-align: left;
+
+  &:hover {
+    background: #f5f7fa;
+    color: var(--sd-accent-1);
+  }
+
+  &.active {
+    background: #ecf5ff;
+    color: var(--sd-accent-1);
+    border-color: #d9ecff;
+    font-weight: 600;
+  }
+
+  span { font-size: 1.1rem; }
+}
+
+/* --- Calculator Styles --- */
+.ts-calc-mode-switch {
+  display: flex;
+  gap: 0.5rem;
+  margin-bottom: 1rem;
+}
+
+.ts-input-wrapper {
+  position: relative;
+  display: flex;
+  align-items: center;
+  
+  .ts-input-prefix {
+    position: absolute;
+    left: 0.75rem;
+    color: var(--sd-muted);
+    font-weight: 600;
+    pointer-events: none;
+  }
+  
+  .ts-input {
+    padding-left: 1.5rem; /* Space for prefix */
+  }
+}
+
+.ts-calc-result-box {
+  margin-top: 1.5rem;
+  background: #fafafa;
+  border: 1px solid var(--sd-border);
+  border-radius: var(--sd-radius-md);
+  padding: 1.25rem;
+}
+
+.ts-result-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 0.5rem 0;
+  font-size: 0.9rem;
+  color: var(--sd-text);
+
+  &.main {
+    font-weight: 600;
+    font-size: 1rem;
+    border-bottom: 1px dashed var(--sd-border);
+    margin-bottom: 0.5rem;
+    padding-bottom: 0.75rem;
+  }
+
+  &.highlight {
+    font-weight: 700;
+    font-size: 1.1rem;
+    color: var(--sd-text-strong);
+    margin-top: 0.25rem;
+  }
+
+  .ts-result-value {
+    font-family: ui-monospace, monospace;
+    font-weight: 600;
+    
+    &.text-danger { color: #f56c6c; }
+    &.text-success { color: #67c23a; font-size: 1.2rem; }
+  }
+}
+
+.ts-divider {
+  height: 1px;
+  background: var(--sd-border);
+  margin: 0.5rem 0;
+}
+
+.ts-hint-text {
+  margin-top: 1rem;
+  font-size: 0.8rem;
+  color: var(--sd-muted);
+  line-height: 1.5;
+  background: #fffbe6;
+  padding: 0.75rem;
+  border-radius: var(--sd-radius-sm);
+  border-left: 3px solid #ffe58f;
+}
+
+.ts-alert-danger {
+  margin-top: 1rem;
+  padding: 0.75rem;
+  background: #fef0f0;
+  color: #f56c6c;
+  border-radius: var(--sd-radius-sm);
+  font-size: 0.9rem;
+  text-align: center;
 }
 
 .ts-modal-body {

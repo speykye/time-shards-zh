@@ -160,8 +160,55 @@ export class TimeShards {
     projects: { name: string; count: number }[];
     fileName: string;
   } | null>(null);
+  currentView = signal<'timeline' | 'calculator'>('timeline');
+  calcMode = signal<'forward' | 'backward'>('forward');
+  inputAmount = signal<number>(0);
+  taxRate = signal<number>(0.06); // 默认 6%
+  platformRate = signal<number>(0.05); // 默认 5%
+  hasInvoice = signal<boolean>(false); // 是否含税票
 
   // ---------- computeds ----------
+  calculationResult = computed(() => {
+    const amount = this.inputAmount();
+    const tax = this.taxRate();
+    const plat = this.platformRate();
+    const mode = this.calcMode();
+    
+    if (!amount || amount <= 0) return null;
+
+    let preTax = 0;
+    let postTax = 0;
+    let taxFee = 0;
+    let platformFee = 0;
+
+    if (mode === 'forward') {
+      // 正算：输入的是税前金额
+      preTax = amount;
+      // 简单模型：平台费基于税前，税费基于税前 (具体公式可根据你的 Fee-Lens 逻辑调整)
+      platformFee = preTax * plat;
+      taxFee = preTax * tax;
+      postTax = preTax - platformFee - taxFee;
+    } else {
+      // 反算：输入的是期望到手金额 (税后)
+      postTax = amount;
+      // 公式推导：Post = Pre * (1 - tax - plat) => Pre = Post / (1 - tax - plat)
+      const rateSum = tax + plat;
+      if (rateSum >= 1) return { error: '费率总和不能超过 100%' };
+      
+      preTax = postTax / (1 - rateSum);
+      platformFee = preTax * plat;
+      taxFee = preTax * tax;
+    }
+
+    return {
+      preTax: preTax.toFixed(2),
+      postTax: postTax.toFixed(2),
+      taxFee: taxFee.toFixed(2),
+      platformFee: platformFee.toFixed(2),
+      totalDeduction: (platformFee + taxFee).toFixed(2)
+    };
+  });
+
   hasProjects = computed(() => this.projects().length > 0);
 
   currentProject = computed<TimeShardProject | null>(() => {
@@ -300,6 +347,17 @@ export class TimeShards {
 
   goBack() {
     this.location.back();
+  }
+
+  switchView(view: 'timeline' | 'calculator') {
+    this.currentView.set(view);
+  }
+
+  resetCalculator() {
+    this.inputAmount.set(0);
+    this.taxRate.set(0.06);
+    this.platformRate.set(0.05);
+    this.calcMode.set('forward');
   }
 
   // ---------- utils ----------
