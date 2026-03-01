@@ -1146,6 +1146,70 @@
     }
   }
 
+  .ts-card:has(.ts-nav-list) {
+    padding: 0.5rem;
+    background: transparent;
+    border: none;
+    box-shadow: none;
+    margin-bottom: 0.5rem;
+  }
+
+  .ts-section-title {
+    font-size: 0.75rem;
+    padding: 0 0.5rem;
+    margin-bottom: 0.5rem;
+    display: none; /* 移动端隐藏“工具箱”标题，节省空间 */
+  }
+
+  /* 将垂直列表改为水平滚动或自适应列 */
+  .ts-nav-list {
+    flex-direction: row;
+    gap: 0.5rem;
+    overflow-x: auto; /* 如果按钮太多，允许横向滚动 */
+    padding-bottom: 4px; /* 给滚动条留点空间 */
+    
+    /* 隐藏滚动条但保留功能 */
+    &::-webkit-scrollbar {
+      display: none;
+    }
+    -ms-overflow-style: none;
+    scrollbar-width: none;
+  }
+
+  /* 移动端按钮样式优化 */
+  .ts-nav-item {
+    flex: 1; /* 两个按钮平分宽度 */
+    min-width: 120px; /* 最小宽度，防止太窄 */
+    padding: 0.6rem 0.8rem;
+    font-size: 0.85rem;
+    justify-content: center; /* 内容居中 */
+    border-radius: var(--sd-radius-full); /* 更圆的胶囊形状 */
+    background: #f5f7fa; /* 默认给个浅色背景，更像开关 */
+    border: 1px solid transparent;
+    
+    span {
+      font-size: 1rem;
+      margin-right: 4px;
+    }
+
+    &.active {
+      background: var(--sd-accent-1);
+      color: #fff;
+      box-shadow: 0 2px 8px rgba(64, 158, 255, 0.3);
+      border-color: var(--sd-accent-1);
+    }
+    
+    &:hover:not(.active) {
+      background: #eef2f7;
+      transform: none; /* 移动端移除位移效果，避免误触 */
+    }
+  }
+  
+  /* 如果主布局在移动端变成了单列，确保导航栏不挤占主要内容 */
+  .ts-main {
+    margin-top: 0.5rem;
+  }
+
   .ts-main {
     grid-template-columns: 1fr;
     display: flex;
