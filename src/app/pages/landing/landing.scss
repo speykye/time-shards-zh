@@ -4,8 +4,8 @@
     display: block;
     min-height: 100vh;
     padding-top: 2.5rem;
+    background: var(--sd-bg); 
 }
-
 
 .lp-hero {
     padding: 0.6rem 0 1rem;
@@ -42,13 +42,79 @@
     font-size: 1.1rem;
 }
 
+// --- Footer Styles ---
+.sd-footer {
+    margin-top: 4rem;
+    padding: 2.5rem 0;
+    border-top: 1px solid var(--sd-border);
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    flex-wrap: wrap;
+    gap: 1.5rem;
+    
+    // 左侧品牌区
+    .sd-footer-brand {
+        display: flex;
+        flex-direction: column;
+        gap: 0.4rem;
+        
+        .sd-filing {
+            margin-top: 0.5rem;
+            display: flex;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 0.4rem;
+            
+            .filing-divider {
+                color: var(--sd-border-strong);
+                font-size: 0.8rem;
+                user-select: none;
+            }
+
+            .filing-link {
+                font-size: 0.8rem;
+                color: var(--sd-muted);
+                text-decoration: none;
+                transition: color 0.2s;
+                
+                &:hover {
+                    color: var(--sd-text);
+                    text-decoration: underline;
+                }
+                
+                // 确保移动端不换行奇怪
+                white-space: nowrap; 
+            }
+        }
+    }
+}
+
 .lp-footer-right {
     display: inline-flex;
+    align-items: center;
     gap: 1.1rem;
 
-    a {
+    a.sd-link {
+        color: var(--sd-text);
+        text-decoration: none;
+        font-size: 0.9rem;
+        transition: color 0.2s;
+        
+        &:hover {
+            color: var(--sd-accent-1);
+        }
+
         svg {
             width: 20px;
+            height: 20px;
+            vertical-align: middle;
+            fill: currentColor;
+        }
+        
+        &.github-link {
+            display: inline-flex;
+            align-items: center;
         }
     }
 }
@@ -59,8 +125,25 @@
         padding: 1.5rem 1rem;
     }
 
-    .lp-footer-right {
+    .sd-footer {
         flex-direction: column;
-        gap: 0.8rem;
+        align-items: center;
+        text-align: center;
+        padding: 2rem 0;
+        
+        .sd-footer-brand {
+            align-items: center;
+        }
+        
+        .sd-filing {
+            justify-content: center;
+        }
+    }
+
+    .lp-footer-right {
+        flex-direction: row; // 手机端保持横向排列链接，或者改为 column
+        flex-wrap: wrap;
+        justify-content: center;
+        gap: 1rem;
     }
 }
