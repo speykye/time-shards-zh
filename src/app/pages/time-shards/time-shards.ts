@@ -2,6 +2,7 @@ import { Component, computed, effect, inject, PLATFORM_ID, signal } from '@angul
 import { CommonModule, isPlatformBrowser, NgClass, DatePipe, Location } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { TimeShardsProofService, SealReceipt } from './time-shards.service';
+import { TimeShardsDbService } from './time-shards-db.service';
 
 const STORAGE_KEY = 'time-shards-v2';
 const GENESIS_HASH = '0'.repeat(64);
@@ -109,6 +110,10 @@ export class TimeShards {
   private isBrowser = isPlatformBrowser(this.platformId);
   private proofService = inject(TimeShardsProofService);
   private location = inject(Location);
+  private dbService = inject(TimeShardsDbService);
+
+  /** 数据从 IndexedDB 加载完毕后置为 true，防止 effect 在加载前误写空数据 */
+  private storageReady = signal(false);
 
   // ---------- state ----------
   projects = signal<TimeShardProject[]>([]);
@@ -332,16 +337,19 @@ export class TimeShards {
   });
 
   constructor() {
-    this.restoreFromStorage();
+    this.initStorage();
 
     effect(() => {
-      if (!this.isBrowser) return;
+      // 等待数据加载完毕后再持久化，避免覆盖尚未读取的数据
+      if (!this.isBrowser || !this.storageReady()) return;
       const payload: ExportPayload = {
         version: 2,
         exportedAt: new Date().toISOString(),
         projects: this.projects(),
       };
-      localStorage.setItem(STORAGE_KEY, JSON.stringify(payload));
+      this.dbService
+        .save(payload)
+        .catch((err) => console.error('[Time-Shards] IndexedDB save failed', err));
     });
   }
 
@@ -402,13 +410,66 @@ export class TimeShards {
   }
 
   // ---------- storage ----------
-  private restoreFromStorage() {
+  /**
+   * 异步初始化存储：
+   * 1. 优先从 IndexedDB 读取数据
+   * 2. 若 IndexedDB 为空，则检查 localStorage（旧版数据），执行无感知迁移后清除 localStorage
+   * 3. 若均无数据，则创建演示项目
+   */
+  private async initStorage() {
     if (!this.isBrowser) return;
-    const rawV2 = localStorage.getItem(STORAGE_KEY);
-    const rawV1 = localStorage.getItem('time-shards-v1');
-    const raw = rawV2 ?? rawV1;
 
-    if (!raw) {
+    try {
+      let parsed: ExportPayload | null = null;
+
+      // 1. 尝试从 IndexedDB 读取
+      const idbData = await this.dbService.load();
+      if (idbData && typeof idbData === 'object') {
+        parsed = idbData as ExportPayload;
+      }
+
+      // 2. IndexedDB 无数据 → 检查 localStorage 并迁移（无感知）
+      if (!parsed) {
+        const rawV2 = localStorage.getItem(STORAGE_KEY);
+        const rawV1 = localStorage.getItem('time-shards-v1');
+        const raw = rawV2 ?? rawV1;
+
+        if (raw) {
+          try {
+            parsed = JSON.parse(raw) as ExportPayload;
+            // 迁移到 IndexedDB
+            await this.dbService.save(parsed);
+            // 迁移成功后清除 localStorage，避免重复迁移
+            localStorage.removeItem(STORAGE_KEY);
+            localStorage.removeItem('time-shards-v1');
+            console.info('[Time-Shards] 已将数据从 localStorage 迁移至 IndexedDB。');
+          } catch (e) {
+            console.error('[Time-Shards] localStorage 迁移失败', e);
+            parsed = null;
+          }
+        }
+      }
+
+      // 3. 解析并应用数据
+      if (parsed && Array.isArray(parsed.projects)) {
+        const version = Number((parsed as any).version ?? 1);
+        const safe = this.importProjects(parsed.projects, version);
+        this.projects.set(safe);
+        this.currentProjectIndex.set(safe.length ? 0 : -1);
+      } else {
+        // 无任何历史数据，创建演示项目
+        const demo: TimeShardProject = {
+          id: this.newId(),
+          name: 'My first commission',
+          summary: '',
+          createdAt: new Date().toISOString(),
+          shards: [],
+        };
+        this.projects.set([demo]);
+        this.currentProjectIndex.set(0);
+      }
+    } catch (e) {
+      console.error('[Time-Shards] 存储初始化失败，使用空项目', e);
       const demo: TimeShardProject = {
         id: this.newId(),
         name: 'My first commission',
@@ -418,19 +479,9 @@ export class TimeShards {
       };
       this.projects.set([demo]);
       this.currentProjectIndex.set(0);
-      return;
-    }
-
-    try {
-      const parsed: ExportPayload = JSON.parse(raw);
-      if (parsed && Array.isArray(parsed.projects)) {
-        const version = Number((parsed as any).version ?? 1);
-        const safe = this.importProjects(parsed.projects, version);
-        this.projects.set(safe);
-        this.currentProjectIndex.set(safe.length ? 0 : -1);
-      }
-    } catch (e) {
-      console.error('Failed to parse Time-Shards storage', e);
+    } finally {
+      // 无论成功与否，标记存储就绪，允许 effect 开始持久化
+      this.storageReady.set(true);
     }
   }
 
