@@ -178,7 +178,7 @@ export class TimeShards {
     const tax = this.taxRate();
     const plat = this.platformRate();
     const mode = this.calcMode();
-    
+
     if (!amount || amount <= 0) return null;
 
     let preTax = 0;
@@ -199,7 +199,7 @@ export class TimeShards {
       // 公式推导：Post = Pre * (1 - tax - plat) => Pre = Post / (1 - tax - plat)
       const rateSum = tax + plat;
       if (rateSum >= 1) return { error: '费率总和不能超过 100%' };
-      
+
       preTax = postTax / (1 - rateSum);
       platformFee = preTax * plat;
       taxFee = preTax * tax;
@@ -1024,9 +1024,11 @@ export class TimeShards {
     const isMock = true;
 
     // Minimal notice
-    const confirmMsg = isMock
-      ? '在线封存将仅上传哈希值（entryHash/prevHash/artifacts sha256）用于公开验证。\n\n不会上传任何具体内容。\n\n是否继续？'
-      : 'Seal online will upload ONLY hashes...\n\nContinue?';
+    const confirmMsg = '封存将为此记录生成唯一"数字指纹"，并上传至验证服务器存档。\n\n' +
+      '✅ 不会上传任何具体内容（文字、图片等）\n' +
+      '✅ 仅上传内容的数字指纹（哈希值）\n' +
+      '✅ 封存后可向对方提供凭证证明记录真实性\n\n' +
+      '是否继续封存？';
 
     if (!confirm(confirmMsg)) return;
     const prevHash = this.getLatestSealedHash(project);
@@ -1061,14 +1063,98 @@ export class TimeShards {
 
   copyPublicReceipt(shard: TimeShard) {
     if (!shard.seal) return;
-    const publicReceipt = { version: 1, ...shard.seal };
-    this.copyText(JSON.stringify(publicReceipt, null, 2), '公开回执已复制。');
+    const seal = shard.seal;
+    const sealedDate = new Date(seal.sealedAt).toLocaleString('zh-CN', {
+      year: 'numeric', month: '2-digit', day: '2-digit',
+      hour: '2-digit', minute: '2-digit', second: '2-digit'
+    });
+
+    const lines: string[] = [
+      '═══════════════════════════════════════',
+      '📋 Time-Shards 封存凭证（公开版）',
+      '═══════════════════════════════════════',
+      '',
+      `✅ 封存状态：已验证`,
+      `📅 封存时间：${sealedDate}`,
+      '',
+      '🔍 记录数字指纹（证明内容未被篡改）',
+      `   本记录指纹：${seal.entryHash.slice(0, 16)}...`,
+      `   上一条指纹：${seal.prevHash === '0'.repeat(64) ? '（首条记录）' : seal.prevHash.slice(0, 16) + '...'}`,
+      '',
+    ];
+
+    if (shard.artifacts?.length) {
+      lines.push(`📎 附件数字指纹（共 ${shard.artifacts.length} 个文件）`);
+      for (const a of shard.artifacts) {
+        lines.push(`   · ${a.name}：${a.sha256.slice(0, 16)}...`);
+      }
+      lines.push('');
+    }
+
+    lines.push(
+      '━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━',
+      '💡 如何使用此凭证？',
+      '   将此文本发送给对方，对方可用来核实',
+      '   这条记录在封存后未被修改过。',
+      '━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━',
+      '',
+      '[ 技术数据（供专业验证使用）]',
+      `entryHash: ${seal.entryHash}`,
+      `prevHash:  ${seal.prevHash}`,
+      `sealedAt:  ${seal.sealedAt}`,
+      `signature: ${seal.signature}`,
+    );
+
+    this.copyText(lines.join('\n'), '封存凭证已复制到剪贴板，可直接发送给对方。');
   }
 
   copyOwnerReceipt(shard: TimeShard) {
     if (!shard.seal) return;
-    const ownerReceipt = { version: 1, ...shard.seal, ownerDeleteToken: shard.ownerDeleteToken };
-    this.copyText(JSON.stringify(ownerReceipt, null, 2), '所有者回执已复制。');
+    const seal = shard.seal;
+    const sealedDate = new Date(seal.sealedAt).toLocaleString('zh-CN', {
+      year: 'numeric', month: '2-digit', day: '2-digit',
+      hour: '2-digit', minute: '2-digit', second: '2-digit'
+    });
+
+    const lines: string[] = [
+      '═══════════════════════════════════════',
+      '🔐 Time-Shards 封存凭证（所有者版）',
+      '═══════════════════════════════════════',
+      '⚠️  此版本含撤销密钥，请勿泄露给对方！',
+      '',
+      `✅ 封存状态：已验证`,
+      `📅 封存时间：${sealedDate}`,
+      '',
+      '🔍 记录数字指纹',
+      `   本记录指纹：${seal.entryHash.slice(0, 16)}...`,
+      `   上一条指纹：${seal.prevHash === '0'.repeat(64) ? '（首条记录）' : seal.prevHash.slice(0, 16) + '...'}`,
+      '',
+    ];
+
+    if (shard.ownerDeleteToken) {
+      lines.push(
+        '🗝️  撤销密钥（仅您可见，用于申请撤销封存）',
+        `   ${shard.ownerDeleteToken}`,
+        '',
+      );
+    }
+
+    lines.push(
+      '━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━',
+      '💡 撤销密钥的用途：',
+      '   如需撤销此封存，需提供此密钥。',
+      '   请将此凭证保存在安全的地方，切勿丢失。',
+      '━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━',
+      '',
+      '[ 技术数据（供专业验证使用）]',
+      `entryHash:        ${seal.entryHash}`,
+      `prevHash:         ${seal.prevHash}`,
+      `sealedAt:         ${seal.sealedAt}`,
+      `signature:        ${seal.signature}`,
+      `ownerDeleteToken: ${shard.ownerDeleteToken ?? '（无）'}`,
+    );
+
+    this.copyText(lines.join('\n'), '所有者凭证已复制，请妥善保管撤销密钥。');
   }
 
   async revokeSealOnline(shard: TimeShard) {
@@ -1204,25 +1290,25 @@ export class TimeShards {
 
     const artifacts: ArtifactMeta[] | undefined = Array.isArray(s.artifacts)
       ? s.artifacts.map((a: any) => ({
-          name: String(a.name ?? 'file'),
-          size: Number(a.size ?? 0),
-          mime: String(a.mime ?? 'application/octet-stream'),
-          sha256: String(a.sha256 ?? ''),
-          hashedAt: typeof a.hashedAt === 'string' ? a.hashedAt : createdAt,
-          note: typeof a.note === 'string' ? a.note : undefined,
-        }))
+        name: String(a.name ?? 'file'),
+        size: Number(a.size ?? 0),
+        mime: String(a.mime ?? 'application/octet-stream'),
+        sha256: String(a.sha256 ?? ''),
+        hashedAt: typeof a.hashedAt === 'string' ? a.hashedAt : createdAt,
+        note: typeof a.note === 'string' ? a.note : undefined,
+      }))
       : undefined;
 
     const seal: SealMeta | undefined =
       s.seal && typeof s.seal === 'object'
         ? {
-            sealedAt: String(s.seal.sealedAt ?? ''),
-            prevHash: String(s.seal.prevHash ?? GENESIS_HASH),
-            entryHash: String(s.seal.entryHash ?? ''),
-            entryVersion: Number(s.seal.entryVersion ?? 1),
-            toolVersion: Number(s.seal.toolVersion ?? 2),
-            signature: String(s.seal.signature ?? ''),
-          }
+          sealedAt: String(s.seal.sealedAt ?? ''),
+          prevHash: String(s.seal.prevHash ?? GENESIS_HASH),
+          entryHash: String(s.seal.entryHash ?? ''),
+          entryVersion: Number(s.seal.entryVersion ?? 1),
+          toolVersion: Number(s.seal.toolVersion ?? 2),
+          signature: String(s.seal.signature ?? ''),
+        }
         : undefined;
 
     const base: TimeShard = {
@@ -1286,23 +1372,23 @@ export class TimeShards {
         fields: f,
         lockedSnapshot: s.letter?.lockedSnapshot
           ? {
-              label: String(s.letter.lockedSnapshot.label ?? base.label),
-              details: String(s.letter.lockedSnapshot.details ?? base.details),
-              fields: {
-                deliverables: String(
-                  s.letter.lockedSnapshot.fields?.deliverables ?? f.deliverables,
-                ),
-                usage: String(s.letter.lockedSnapshot.fields?.usage ?? f.usage),
-                deadline: String(s.letter.lockedSnapshot.fields?.deadline ?? f.deadline),
-                revisions: String(s.letter.lockedSnapshot.fields?.revisions ?? f.revisions),
-                acceptance: String(s.letter.lockedSnapshot.fields?.acceptance ?? f.acceptance),
-                scopeBoundaries: String(
-                  s.letter.lockedSnapshot.fields?.scopeBoundaries ?? f.scopeBoundaries,
-                ),
-                references: String(s.letter.lockedSnapshot.fields?.references ?? f.references),
-              },
-              lockedAt: String(s.letter.lockedSnapshot.lockedAt ?? base.createdAt),
-            }
+            label: String(s.letter.lockedSnapshot.label ?? base.label),
+            details: String(s.letter.lockedSnapshot.details ?? base.details),
+            fields: {
+              deliverables: String(
+                s.letter.lockedSnapshot.fields?.deliverables ?? f.deliverables,
+              ),
+              usage: String(s.letter.lockedSnapshot.fields?.usage ?? f.usage),
+              deadline: String(s.letter.lockedSnapshot.fields?.deadline ?? f.deadline),
+              revisions: String(s.letter.lockedSnapshot.fields?.revisions ?? f.revisions),
+              acceptance: String(s.letter.lockedSnapshot.fields?.acceptance ?? f.acceptance),
+              scopeBoundaries: String(
+                s.letter.lockedSnapshot.fields?.scopeBoundaries ?? f.scopeBoundaries,
+              ),
+              references: String(s.letter.lockedSnapshot.fields?.references ?? f.references),
+            },
+            lockedAt: String(s.letter.lockedSnapshot.lockedAt ?? base.createdAt),
+          }
           : undefined,
       };
 
