@@ -166,6 +166,36 @@
   line-height: 1.4;
 }
 
+.ts-contact-link {
+  margin-top: 8px;
+}
+
+.ts-contact-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  font-size: 0.8rem;
+  color: var(--sd-accent-1);
+  text-decoration: none;
+  padding: 0.3rem 0.8rem;
+  border-radius: var(--sd-radius-full);
+  background: rgba(64, 158, 255, 0.08);
+  border: 1px solid rgba(64, 158, 255, 0.2);
+  transition: all 0.2s ease;
+  font-weight: 500;
+  
+  &:hover {
+    background: rgba(64, 158, 255, 0.15);
+    border-color: rgba(64, 158, 255, 0.4);
+    transform: translateY(-1px);
+    box-shadow: 0 2px 8px rgba(64, 158, 255, 0.15);
+  }
+  
+  &:active {
+    transform: translateY(0);
+  }
+}
+
 .ts-toolbar {
   display: inline-flex;
   align-items: center;
